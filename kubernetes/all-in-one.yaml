@@ -1,0 +1,64 @@
+
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: angular
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: angular
+  labels:
+    app: angular
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: angular
+  template:
+    metadata:
+      labels:
+        app: angular
+    spec:
+      containers:
+      - name: angular
+        image: teperwoman/angular
+        ports:
+        - containerPort: 4200
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: angular
+spec:
+  selector:
+    app: angular
+  ports:
+    - protocol: TCP
+      port: 4200
+      targetPort: 4200
+  type: ClusterIP
+
+---
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: angular
+  namespace: angular
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+spec:
+  tls:
+    - hosts:
+        - angular.maya.com
+  rules:
+    - host: angular.maya.com
+      http:
+        paths:
+          - path: /(.*)
+            backend:
+              serviceName: angular
+              servicePort: 4200
